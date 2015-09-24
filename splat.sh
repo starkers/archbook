@@ -30,19 +30,27 @@ done
 set -e
 
 FILE=ArchLinuxARM-peach-latest.tar.gz
-if [ -f "$FILE" ]; then
-  #local copy of arch found
-  #check md5sum matches current
+
+check_md5(){
   MD5_CURRENT="$(curl -s http://os.archlinuxarm.org/os/${FILE}.md5 | cut -c 1-32 )"
   MD5_LOCAL="$(md5sum < "$FILE" | cut -c 1-32)"
-  set +x
   if [ "X$MD5_LOCAL" == "X$MD5_CURRENT" ]; then
+    MD5_GOOD=1
     echo "Local copy of Arch tarball has the correct MD5 -yay"
   else
+    MD5_GOOD=0
+    echo "Local copy of Arch has wrong md5.. removing file.. run this script again"
     try rm "$FILE"
-    echo "Downloading Arch tarball"
-    curl http://os.archlinuxarm.org/os/ArchLinuxARM-peach-latest.tar.gz -O "$FILE"
+    exit
   fi
+}
+
+if [ ! -f "$FILE" ]; then
+  echo "Downloading Arch tarball"
+  curl http://os.archlinuxarm.org/os/ArchLinuxARM-peach-latest.tar.gz -O "$FILE"
+  check_md5
+else
+  check_md5
 fi
 
 
