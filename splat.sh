@@ -47,7 +47,7 @@ check_md5(){
 
 if [ ! -f "$FILE" ]; then
   echo "Downloading Arch tarball"
-  curl "http://os.archlinuxarm.org/os/ArchLinuxARM-peach-latest.tar.gz" -O "$FILE"
+  curl "http://os.archlinuxarm.org/os/ArchLinuxARM-peach-latest.tar.gz" -o "$FILE"
   check_md5
 else
   check_md5
