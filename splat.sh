@@ -21,8 +21,6 @@ elif grep -q /dev/mmcblk <<<"$DISK" ; then
   TYPE=mmc
 fi
 
-echo $TYPE
-exit
 echo "Installing to [$DISK] in 5 seconds... ctrl+c to abort"
 sleep 5
 
@@ -31,6 +29,9 @@ umount $a
 done
 set -e
 
+
+try wget http://archlinuxarm.org/os/ArchLinuxARM-peach-latest.tar.gz -c
+try mkdir -p root
 
 try dd if=/dev/zero of="$DISK" bs=1M count=30
 try parted "$DISK" mklabel gpt
@@ -44,30 +45,34 @@ try sync
 sleep 1
 
 
-if grep -q /dev/sd <<<"$DISK" ; then
+if [ "$TYPE" == usb ]; then
   # I assume this is the USB stick and I'm inside chromeos
   try sfdisk -R $DISK
-fi
-
-if grep -q /dev/mmcblk <<<"$DISK" ; then
+else
   # I assume this is now the inbuilt MMC and I'm inside arch
   try partprobe
 fi
 
 sleep 1
 
-try mkfs.ext4 -L root -m 0 "${DISK}2"
-try wget http://archlinuxarm.org/os/ArchLinuxARM-peach-latest.tar.gz -c
+if [ "$TYPE" == usb ]; then
+  try mkfs.ext4 -L root -m 0 "${DISK}2"
+  try mount "${DISK}2" root
+else
+  try mkfs.ext4 -L root -m 0 "${DISK}p2"
+  try mount "${DISK}p2" root
+fi
 
-try mkdir -p root
-try mount "${DISK}2" root
+
 try tar -xf ArchLinuxARM-peach-latest.tar.gz -C root
 
-try dd if=root/boot/vmlinux.kpart of="${DISK}1"
+if [ "$TYPE" == usb ]; then
+  try dd if=root/boot/vmlinux.kpart of="${DISK}1"
+else
+  try dd if=root/boot/vmlinux.kpart of="${DISK}p1"
+fi
+
 try sync
 try umount root
 
-yell reboot, ctrl+u
-exit
-
-
+yell "beroot!"
