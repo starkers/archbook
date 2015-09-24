@@ -14,6 +14,15 @@ else
   DISK=$1
 fi
 
+
+if grep -q /dev/sd <<<"$DISK" ; then
+  TYPE=usb
+elif grep -q /dev/mmcblk <<<"$DISK" ; then
+  TYPE=mmc
+fi
+
+echo $TYPE
+exit
 echo "Installing to [$DISK] in 5 seconds... ctrl+c to abort"
 sleep 5
 
@@ -33,6 +42,8 @@ SECTOR="$(cgpt show $DISK | grep "Sec GPT table" | awk '{print $1}')"
 try cgpt add -i 2 -t data -b 40960 -s `expr $SECTOR - 40960` -l Root "$DISK"
 try sync
 sleep 1
+
+
 if grep -q /dev/sd <<<"$DISK" ; then
   # I assume this is the USB stick and I'm inside chromeos
   try sfdisk -R $DISK

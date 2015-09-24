@@ -19,7 +19,7 @@ on chromeos ensure you have :
 ```
 wget http://git.io/vnD1l -O splat.sh
 chmod +x splat.sh
-./splat.sh [```DEVICE```]
+./splat.sh $DEVICE
 ```
 
 where DEVICE is normally:
