@@ -1,6 +1,7 @@
 #!/usr/bin/bash
 #per:  http://archlinuxarm.org/platforms/armv7/samsung/samsung-chromebook
 
+# to download this script: http://git.io/vnD1l
 
 yell() { echo "$0: $*" >&2; }
 die() { yell "$*"; exit 111; }

@@ -13,3 +13,14 @@ on chromeos ensure you have :
 - you installed parted: ```emerge parted```
 
 
+
+## grab script and go
+wget http://git.io/vnD1l -O splat.sh
+chmod +x splat.sh
+./splat.sh [```DEVICE```]
+
+where DEVICE is normally:
+
+ 1. /dev/sda (from chromeos)
+
+ 2. /dev/mmcblk0 (once booted of said USB stick)
