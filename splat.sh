@@ -1,7 +1,7 @@
 #!/usr/bin/bash
 #per:  http://archlinuxarm.org/platforms/armv7/samsung/samsung-chromebook
 
-# to download this script: http://git.io/vnD1l
+# short URL: http://git.io/vcNSH
 
 yell() { echo "$0: $*" >&2; }
 die() { yell "$*"; exit 111; }
@@ -53,6 +53,15 @@ else
   check_md5
 fi
 
+GITHUBUSER="wamserma"
+REPOFILES="https://raw.githubusercontent.com/${GITHUBUSER}/archarm-usb-hp-chromebook-11"
+echo "Getting working cgpt binary"
+mkdir -p /usr/local/bin
+if [ -f "/usr/local/bin/cgpt" ]; then
+  mv /usr/local/bin/cgpt /usr/local/bin/cgpt.bak
+fi
+wget ${REPOFILES}/master/deps/cgpt --output-document=/usr/local/bin/cgpt
+chmod +x /usr/local/bin/cgpt
 
 try mkdir -p root
 

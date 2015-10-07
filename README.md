@@ -1,6 +1,6 @@
 # Overview
 Install arch onto an HP chromebook 11
-
+Fork/snapshot of @starkers method.
 
 Kudos to @ https://github.com/omgmog/archarm-usb-hp-chromebook-11
 but based off the steps here: http://archlinuxarm.org/platforms/armv7/samsung/samsung-chromebook
