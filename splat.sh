@@ -107,9 +107,19 @@ try $PARTED_BIN "$DISK" mklabel gpt
 try $CGPT_BIN create "$DISK"
 try $CGPT_BIN add -i 1 -t kernel -b 8192 -s 32768 -l Kernel -S 1 -T 5 -P 10 "$DISK"
 
-SECTOR="$($CGPT_BIN show $DISK | grep "Sec GPT table" | awk '{print $1}')"
+#Assuming 512 bytes per sector.. lets just make a 1GB partition as standard (more reliable to DD)
+#this was used to determine last sector
+# SECTOR="$($CGPT_BIN show $DISK | grep "Sec GPT table" | awk '{print $1}')"
 
-try $CGPT_BIN add -i 2 -t data -b 40960 -s `expr $SECTOR - 40960` -l Root "$DISK"
+#Desired size of Root Partition
+SIZE=1024  # In Meg
+#Bytes per Sector
+SECSIZE=512
+
+let "LIMIT = $SIZE * $SECSIZE"
+try $CGPT_BIN add -i 2 -t data -b 40960 -s $LIMIT -l Root "$DISK"
+
+
 
 yell "Signal re-read of device"
 try sync
