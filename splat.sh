@@ -107,18 +107,10 @@ try $PARTED_BIN "$DISK" mklabel gpt
 try $CGPT_BIN create "$DISK"
 try $CGPT_BIN add -i 1 -t kernel -b 8192 -s 32768 -l Kernel -S 1 -T 5 -P 10 "$DISK"
 
-#Assuming 512 bytes per sector.. lets just make a 1GB partition as standard (more reliable to DD)
-#this was used to determine last sector
-# SECTOR="$($CGPT_BIN show $DISK | grep "Sec GPT table" | awk '{print $1}')"
+#this is used to determine last sector
+SECTOR="$($CGPT_BIN show $DISK | grep "Sec GPT table" | awk '{print $1}')"
 
-#Desired size of Root Partition
-SIZE=1024  # In Meg
-
-#Bytes per Sector
-SECSIZE=512
-
-let "ONEMEG = $SECSIZE * 4"
-let "LIMIT = $ONEMEG * $SIZE"
+let "LIMIT = $SECTOR - 40960"
 try $CGPT_BIN add -i 2 -t data -b 40960 -s $LIMIT -l Root "$DISK"
 
 
