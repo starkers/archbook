@@ -38,6 +38,7 @@ The following sticks are known to work: (Please report success)
 
 ## non-working memory sticks
 - SanDisk 64GB Cruzer Extreme
+- Pretec i-Disk Bullet 3.0
 
 
 ## execution variables
