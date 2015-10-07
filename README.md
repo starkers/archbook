@@ -1,26 +1,51 @@
-# Overview
+# TL;DR
 Install arch onto an HP chromebook 11
 
-Kudos to @omgmog https://github.com/omgmog/archarm-usb-hp-chromebook-11
+Install steps:
+- developer mode [enabled](https://blog.omgmog.net/post/installing-arch-linux-arm-on-the-hp-chromebook-11/)
+- in chromebook open terminal.. ```ctrl```+```alt```+```t```
 
-Loosely this is based off the steps here: http://archlinuxarm.org/platforms/armv7/samsung/samsung-chromebook
+```
+shell
+sudo su -
+```
+- enable USB boot: ```crossystem dev_boot_usb=1 dev_boot_signed_only=0```
+- plug in a memory stick
+- splat it
 
-## Pre-work
+```
+wget http://git.io/vnD1l -O splat.sh
+bash splat.sh
+```
+
+# Credits
+- @omgmog - https://github.com/omgmog/archarm-usb-hp-chromebook-11
+- ArchLinux.. this is based off the steps here: http://archlinuxarm.org/platforms/armv7/samsung/samsung-chromebook
+
+# Pre-work
 on chromeos ensure you have
 - developer mode [enabled](https://blog.omgmog.net/post/installing-arch-linux-arm-on-the-hp-chromebook-11/)
-- you have run: ```dev_install```
-- you installed parted: ```emerge parted```
 - USB boot enabled: ```crossystem dev_boot_usb=1 dev_boot_signed_only=0```
 
-## grab script and go
+You no longer need parted or to have run ```dev_install```
+..the binaries and libs are grabbed from here
 
+# Memory stick
+I don't know why yet but most of my memory sticks don't "work"..
+## working USB sticks
+The following sticks are known to work: (Please report success)
+- DataTraveler "G4" - http://www.kingston.com/datasheets/DTIG4_en.pdf
+
+## non-working memory sticks
+- SanDisk 64GB Cruzer Extreme
+
+
+x## grab script and go
 **Note** plug in a USB stick.. it should hopefully come up as ```/dev/sda```
-
 ```
 wget http://git.io/vnD1l -O splat.sh
 bash splat.sh $DEVICE
 ```
-
 
 where ```$DEVICE``` is normally one of these:
 

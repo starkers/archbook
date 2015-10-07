@@ -1,6 +1,19 @@
-#!/usr/bin/bash
-#per:  http://archlinuxarm.org/platforms/armv7/samsung/samsung-chromebook
+#!/usr/bin/env bash
+# Install Arch onto a USB stick for the HP Chromebook 11
+# per:  http://archlinuxarm.org/platforms/armv7/samsung/samsung-chromebook
 
+# It may be possible to do this on other samsung chromebooks, feedback welcome
+
+# Notes for the HP chromebook 11:
+# its a bit of a crapshoot whether or not a USB stick will work..
+#
+# I've personally only had 1/5 work... 
+
+# The following sticks are known to work: (Please report success)
+# - DataTraveler "G4" - http://www.kingston.com/datasheets/DTIG4_en.pdf
+
+# Written and maintained by David Stark: https://github.com/starkers/archbook
+#
 # to download this script: http://git.io/vnD1l
 
 yell() { echo "$0: $*" >&2; }
@@ -19,9 +32,11 @@ if grep -q /dev/sd <<<"$DISK" ; then
   TYPE=usb
 elif grep -q /dev/mmcblk <<<"$DISK" ; then
   TYPE=mmc
+else
+  die "I'm sorry but I don't recognise the device: $DISK"
 fi
 
-echo "Installing to [$DISK] in 5 seconds... ctrl+c to abort"
+yell "Installing to [$DISK] in 5 seconds... ctrl+c to abort"
 sleep 5
 
 for a in ${DISK}* ; do
@@ -36,17 +51,17 @@ check_md5(){
   MD5_LOCAL="$(md5sum < "$FILE" | cut -c 1-32)"
   if [ "X$MD5_LOCAL" == "X$MD5_CURRENT" ]; then
     MD5_GOOD=1
-    echo "Local copy of Arch tarball has the correct MD5 -yay"
+    yell "Local copy of Arch tarball has the correct MD5 -yay"
   else
     MD5_GOOD=0
-    echo "Local copy of Arch has wrong md5.. removing file.. run this script again"
+    yell "Local copy of Arch has wrong md5.. removing file.. run this script again"
     try rm "$FILE"
     exit
   fi
 }
 
 if [ ! -f "$FILE" ]; then
-  echo "Downloading Arch tarball"
+  yell "Downloading ArchLinuxARM tarball.. so wow"
   curl "http://os.archlinuxarm.org/os/ArchLinuxARM-peach-latest.tar.gz" -o "$FILE"
   check_md5
 else
@@ -60,34 +75,16 @@ MACHINE="$(uname -m)"
 # TOOD: this should attempt to verify if its on ChromeOS-Arch (or another platform)
 #   EG: ... trying to prepare the USB stick on a amd64 box would fail
 
-
 # Binaries must be under /usr/local/bin due to cgroups or something I assume
 mkdir -p /usr/local/bin
 
+CGPT_BIN=/usr/local/bin/cgpt.tmp
+try wget https://raw.githubusercontent.com/starkers/archbook/master/bin/$MACHINE/cgpt -O "$CGPT_BIN"
+try chmod +x "$CGPT_BIN"
 
-# ## cgpt
-# set +e
-# CGPT="$(which cgpt 2>&1)"
-# set -e
-# if [ ! -f "$CGPT" ]; then
-
-  CGPT_BIN=/usr/local/bin/cgpt.tmp
-  # echo "cgpt not detected, downloading a binary tp $CGPT_BIN"
-  try wget https://raw.githubusercontent.com/starkers/archbook/master/bin/$MACHINE/cgpt -O "$CGPT_BIN"
-  try chmod +x "$CGPT_BIN"
-
-# else
-#   CGPT_BIN="$CGPT"
-# fi
-
-# ## parted
-# set +e
-# PARTED="$(which parted 2>&1)"
-# set -e
-# if [ ! -f "$PARTED" ]; then
-
+if [ ! -f /usr/local/bin/parted ]; then
+  INSTALLED_PARTED=1
   PARTED_BIN=/usr/local/bin/parted.tmp
-  # echo "cgpt not detected, downloading a binary tp $PARTED_BIN"
   try wget https://raw.githubusercontent.com/starkers/archbook/master/bin/$MACHINE/parted -O "$PARTED_BIN"
   try chmod +x "$PARTED_BIN"
 
@@ -96,12 +93,11 @@ mkdir -p /usr/local/bin
   try wget https://raw.githubusercontent.com/starkers/archbook/master/bin/$MACHINE/libparted.so.2.0.0 -O $LIB_PARTED
   try ln -sf $LIB_PARTED /usr/local/lib/libparted.so.2
   try ln -sf $LIB_PARTED /usr/local/lib/libparted.so
-# else
-#   PARTED_BIN="$PARTED"
-# fi
+else
+  PARTED_BIN=/usr/local/bin/parted
+fi
 
 try mkdir -p root
-
 try dd if=/dev/zero of="$DISK" bs=1M count=30
 try $PARTED_BIN "$DISK" mklabel gpt
 try $CGPT_BIN create "$DISK"
@@ -113,12 +109,12 @@ try $CGPT_BIN add -i 2 -t data -b 40960 -s `expr $SECTOR - 40960` -l Root "$DISK
 try sync
 sleep 1
 
-#Signal re-read of device
+yell "Signal re-read of device"
 if [ "$TYPE" == usb ]; then
-  # I assume this is the USB stick and I'm inside chromeos
+  yell "I assume this is the USB stick and I'm inside chromeos"
   try sfdisk -R $DISK
 else
-  # I assume this is now the inbuilt MMC and I'm inside arch
+  yell "I assume this is now the inbuilt MMC and I'm inside arch"
   try partprobe
 fi
 
@@ -142,5 +138,11 @@ fi
 
 try sync
 try umount root
+
+yell "Cleaning up"
+if [ X$INSTALLED_PARTED == X1 ]; then
+  try rm -f /usr/local/lib/libparted.so /usr/local/lib/libparted.so.2 /usr/local/lib/libparted.so.2.0.0 $PARTED_BIN
+fi
+try rm "$CGPT_BIN"
 
 yell "beroot!"
