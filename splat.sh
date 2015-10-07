@@ -113,10 +113,12 @@ try $CGPT_BIN add -i 1 -t kernel -b 8192 -s 32768 -l Kernel -S 1 -T 5 -P 10 "$DI
 
 #Desired size of Root Partition
 SIZE=1024  # In Meg
+
 #Bytes per Sector
 SECSIZE=512
 
-let "LIMIT = $SIZE * $SECSIZE"
+let "ONEMEG = $SECSIZE * 4"
+let "LIMIT = $ONEMEG * $SIZE"
 try $CGPT_BIN add -i 2 -t data -b 40960 -s $LIMIT -l Root "$DISK"
 
 
