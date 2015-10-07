@@ -40,8 +40,10 @@ The following sticks are known to work: (Please report success)
 - SanDisk 64GB Cruzer Extreme
 
 
-x## grab script and go
+## execution variables
 **Note** plug in a USB stick.. it should hopefully come up as ```/dev/sda```
+In theort you can prepare a memory stick even on an x86 computer however:
+
 ```
 wget http://git.io/vnD1l -O splat.sh
 bash splat.sh $DEVICE
@@ -59,5 +61,5 @@ where ```$DEVICE``` is normally one of these:
 - Its pretty easy to [encrypt](https://wiki.archlinux.org/index.php/EncFS) your home directory once you have Arch working.. (luks + loopback works too)
 - wicd is wicd
 
-# notes
+# erata
 This script is currently only supported on the chromebook itself, it should work on an x86 computer but ensure you have the usual criminals installed (```cgpt```, ```parted``` ```mkfs.ext4```, ```tar```, ```wget``` ...coffee ...beer)
