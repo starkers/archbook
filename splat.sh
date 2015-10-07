@@ -75,6 +75,7 @@ else
 fi
 
 ## parted
+set +e
 PARTED="$(which parted 2>&1)"
 set -e
 if [ ! -f "$PARTED" ]; then
