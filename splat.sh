@@ -53,21 +53,35 @@ else
   check_md5
 fi
 
+# TOOD: this should attempt to verify if its on ChromeOS-Arch (or another platform)
+#   EG: ... trying to prepare the USB stick on a amd64 box would fail
+set +e
+CGPT="$(which cgpt 2>&1)"
+set -e
+if [ ! -f "$CGPT" ]; then
+  CGPT_BIN=/tmp/cgpt
+  echo "cgpt not detected, downloading a binary tp $CGPT_BIN"
+  try mkdir -p /usr/local/bin
+  try wget https://raw.githubusercontent.com/starkers/archbook/master/bin/cgpt_armhf -O "$CGPT_BIN"
+  try chmod +x "$CGPT_BIN"
+else
+  CGPT_BIN="$CGPT"
+fi
 
 try mkdir -p root
 
 try dd if=/dev/zero of="$DISK" bs=1M count=30
 try parted "$DISK" mklabel gpt
-try cgpt create "$DISK"
-try cgpt add -i 1 -t kernel -b 8192 -s 32768 -l Kernel -S 1 -T 5 -P 10 "$DISK"
+try $CGPT_BIN create "$DISK"
+try $CGPT_BIN add -i 1 -t kernel -b 8192 -s 32768 -l Kernel -S 1 -T 5 -P 10 "$DISK"
 
-SECTOR="$(cgpt show $DISK | grep "Sec GPT table" | awk '{print $1}')"
+SECTOR="$($CGPT_BIN show $DISK | grep "Sec GPT table" | awk '{print $1}')"
 
-try cgpt add -i 2 -t data -b 40960 -s `expr $SECTOR - 40960` -l Root "$DISK"
+try $CGPT_BIN add -i 2 -t data -b 40960 -s `expr $SECTOR - 40960` -l Root "$DISK"
 try sync
 sleep 1
 
-
+#Signal re-read of device
 if [ "$TYPE" == usb ]; then
   # I assume this is the USB stick and I'm inside chromeos
   try sfdisk -R $DISK
@@ -85,7 +99,6 @@ else
   try mkfs.ext4 -L root -m 0 "${DISK}p2"
   try mount "${DISK}p2" root
 fi
-
 
 try tar -xf ArchLinuxARM-peach-latest.tar.gz -C root
 
