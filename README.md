@@ -7,7 +7,7 @@ Loosely this is based off the steps here: http://archlinuxarm.org/platforms/armv
 
 ## Pre-work
 on chromeos ensure you have
-- developer mode **enabled**
+- developer mode [enabled](https://blog.omgmog.net/post/installing-arch-linux-arm-on-the-hp-chromebook-11/)
 - you have run: ```dev_install```
 - you installed parted: ```emerge parted```
 - USB boot enabled: ```crossystem dev_boot_usb=1 dev_boot_signed_only=0```
@@ -16,7 +16,7 @@ on chromeos ensure you have
 
 ```
 wget http://git.io/vnD1l -O splat.sh
-bash splat.sh $DEVICE
+sh splat.sh $DEVICE
 ```
 
 where ```$DEVICE``` is normally one of these:
@@ -25,6 +25,11 @@ where ```$DEVICE``` is normally one of these:
 
  2. **/dev/mmcblk0** (once booted off said USB stick)
 
+## Tips:
+- The script stores the downloaded Arch image in your current directory.. If you run this under ```/home/root``` it should save you some bandwidth+time if running it multiple times.
+- Install onto a USB stick first.. boot it.. then install onto your internal disk (```/dev/mmcblk0```)
+- Its pretty easy to [encrypt](https://wiki.archlinux.org/index.php/EncFS) your home directory once you have Arch working.. (luks + loopback works too)
+- wicd is wicd
 
 # notes
 This script is currently only supported on the chromebook itself, it should work on an x86 computer but ensure you have the usual criminals installed (```cgpt```, ```parted``` ```mkfs.ext4```, ```tar```, ```wget``` ...coffee ...beer)
