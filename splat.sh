@@ -53,6 +53,8 @@ else
   check_md5
 fi
 
+
+MACHINE="$(uname -m)"
 # TOOD: this should attempt to verify if its on ChromeOS-Arch (or another platform)
 #   EG: ... trying to prepare the USB stick on a amd64 box would fail
 set +e
@@ -61,17 +63,28 @@ set -e
 if [ ! -f "$CGPT" ]; then
   CGPT_BIN=/tmp/cgpt
   echo "cgpt not detected, downloading a binary tp $CGPT_BIN"
-  try mkdir -p /usr/local/bin
-  try wget https://raw.githubusercontent.com/starkers/archbook/master/bin/cgpt_armhf -O "$CGPT_BIN"
+  try wget https://raw.githubusercontent.com/starkers/archbook/master/bin/$MACHINE/cgpt -O "$CGPT_BIN"
   try chmod +x "$CGPT_BIN"
 else
   CGPT_BIN="$CGPT"
 fi
 
+
+PARTED="$(which cgpt 2>&1)"
+set -e
+if [ ! -f "$PARTED" ]; then
+  PARTED_BIN=/tmp/parted
+  echo "cgpt not detected, downloading a binary tp $PARTED_BIN"
+  try wget https://raw.githubusercontent.com/starkers/archbook/master/bin/$MACHINE/parted -O "$PARTED_BIN"
+  try chmod +x "$PARTED_BIN"
+else
+  PARTED_BIN="$PARTED"
+fi
+
 try mkdir -p root
 
 try dd if=/dev/zero of="$DISK" bs=1M count=30
-try parted "$DISK" mklabel gpt
+try $PARTED_BIN "$DISK" mklabel gpt
 try $CGPT_BIN create "$DISK"
 try $CGPT_BIN add -i 1 -t kernel -b 8192 -s 32768 -l Kernel -S 1 -T 5 -P 10 "$DISK"
 
