@@ -1,29 +1,30 @@
 # Overview
 Install arch onto an HP chromebook 11
 
+Kudos to @omgmog https://github.com/omgmog/archarm-usb-hp-chromebook-11
 
-Kudos to @ https://github.com/omgmog/archarm-usb-hp-chromebook-11
-but based off the steps here: http://archlinuxarm.org/platforms/armv7/samsung/samsung-chromebook
+Loosely this is based off the steps here: http://archlinuxarm.org/platforms/armv7/samsung/samsung-chromebook
 
-I got tired of all the typing so posting here
-
-on chromeos ensure you have :
-- developer mode enabled
-- run ```dev_install```
+## Pre-work
+on chromeos ensure you have
+- developer mode **enabled**
+- you have run: ```dev_install```
 - you installed parted: ```emerge parted```
-
-
+- USB boot enabled: ```crossystem dev_boot_usb=1 dev_boot_signed_only=0```
 
 ## grab script and go
 
 ```
 wget http://git.io/vnD1l -O splat.sh
-chmod +x splat.sh
-./splat.sh $DEVICE
+bash splat.sh $DEVICE
 ```
 
-where DEVICE is normally:
+where ```$DEVICE``` is normally one of these:
 
- 1. /dev/sda (from chromeos)
+ 1. **/dev/sda** (from chromeos)
 
- 2. /dev/mmcblk0 (once booted of said USB stick)
+ 2. **/dev/mmcblk0** (once booted off said USB stick)
+
+
+# notes
+This script is currently only supported on the chromebook itself, it should work on an x86 computer but ensure you have the usual criminals installed (```cgpt```, ```parted``` ```mkfs.ext4```, ```tar```, ```wget``` ...coffee ...beer)
