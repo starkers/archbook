@@ -36,9 +36,9 @@ else
   die "I'm sorry but I don't recognise the device: $DISK"
 fi
 
-if [ ! -b "$DISK" ]; then
-  die "error.. $DISK is not a block device"
-fi
+# if [ ! -b "$DISK" ]; then
+#   die "error.. $DISK is not a block device"
+# fi
 
 yell "Installing to [$DISK] in 5 seconds... ctrl+c to abort"
 sleep 5
