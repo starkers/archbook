@@ -106,10 +106,10 @@ try $CGPT_BIN add -i 1 -t kernel -b 8192 -s 32768 -l Kernel -S 1 -T 5 -P 10 "$DI
 SECTOR="$($CGPT_BIN show $DISK | grep "Sec GPT table" | awk '{print $1}')"
 
 try $CGPT_BIN add -i 2 -t data -b 40960 -s `expr $SECTOR - 40960` -l Root "$DISK"
-try sync
-sleep 1
 
 yell "Signal re-read of device"
+try sync
+sleep 1
 if [ "$TYPE" == usb ]; then
   yell "I assume this is the USB stick and I'm inside chromeos"
   try sfdisk -R $DISK
