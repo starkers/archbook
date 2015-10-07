@@ -61,31 +61,35 @@ MACHINE="$(uname -m)"
 #   EG: ... trying to prepare the USB stick on a amd64 box would fail
 
 
-## cgpt
-set +e
-CGPT="$(which cgpt 2>&1)"
-set -e
-if [ ! -f "$CGPT" ]; then
+# ## cgpt
+# set +e
+# CGPT="$(which cgpt 2>&1)"
+# set -e
+# if [ ! -f "$CGPT" ]; then
+
   CGPT_BIN=/tmp/cgpt
   echo "cgpt not detected, downloading a binary tp $CGPT_BIN"
   try wget https://raw.githubusercontent.com/starkers/archbook/master/bin/$MACHINE/cgpt -O "$CGPT_BIN"
   try chmod +x "$CGPT_BIN"
-else
-  CGPT_BIN="$CGPT"
-fi
 
-## parted
-set +e
-PARTED="$(which parted 2>&1)"
-set -e
-if [ ! -f "$PARTED" ]; then
+# else
+#   CGPT_BIN="$CGPT"
+# fi
+
+# ## parted
+# set +e
+# PARTED="$(which parted 2>&1)"
+# set -e
+# if [ ! -f "$PARTED" ]; then
+
   PARTED_BIN=/tmp/parted
   echo "cgpt not detected, downloading a binary tp $PARTED_BIN"
   try wget https://raw.githubusercontent.com/starkers/archbook/master/bin/$MACHINE/parted -O "$PARTED_BIN"
   try chmod +x "$PARTED_BIN"
-else
-  PARTED_BIN="$PARTED"
-fi
+
+# else
+#   PARTED_BIN="$PARTED"
+# fi
 
 try mkdir -p root
 
