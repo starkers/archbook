@@ -14,10 +14,13 @@ on chromeos ensure you have
 
 ## grab script and go
 
+**Note** plug in a USB stick.. it should hopefully come up as ```/dev/sda```
+
 ```
 wget http://git.io/vnD1l -O splat.sh
-sh splat.sh $DEVICE
+bash splat.sh $DEVICE
 ```
+
 
 where ```$DEVICE``` is normally one of these:
 
