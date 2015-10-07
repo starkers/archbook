@@ -54,9 +54,14 @@ else
 fi
 
 
+### Pre-Checks for binaries etc...
+# what platform is this?
 MACHINE="$(uname -m)"
 # TOOD: this should attempt to verify if its on ChromeOS-Arch (or another platform)
 #   EG: ... trying to prepare the USB stick on a amd64 box would fail
+
+
+## cgpt
 set +e
 CGPT="$(which cgpt 2>&1)"
 set -e
@@ -69,8 +74,8 @@ else
   CGPT_BIN="$CGPT"
 fi
 
-
-PARTED="$(which cgpt 2>&1)"
+## parted
+PARTED="$(which parted 2>&1)"
 set -e
 if [ ! -f "$PARTED" ]; then
   PARTED_BIN=/tmp/parted
