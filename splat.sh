@@ -91,6 +91,11 @@ mkdir -p /usr/local/bin
   try wget https://raw.githubusercontent.com/starkers/archbook/master/bin/$MACHINE/parted -O "$PARTED_BIN"
   try chmod +x "$PARTED_BIN"
 
+  try mkdir -p /usr/local/lib
+  LIB_PARTED=/usr/local/lib/libparted.so.2.0.0
+  try wget https://raw.githubusercontent.com/starkers/archbook/master/bin/$MACHINE/libparted.so.2.0.0 -O $LIB_PARTED
+  try ln -sf $LIB_PARTED /usr/local/lib/libparted.so.2
+  try ln -sf $LIB_PARTED /usr/local/lib/libparted.so
 # else
 #   PARTED_BIN="$PARTED"
 # fi
