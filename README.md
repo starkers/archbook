@@ -43,7 +43,7 @@ The following sticks are known to work: (Please report success)
 
 ## execution variables
 **Note** plug in a USB stick.. it should hopefully come up as ```/dev/sda```
-In theort you can prepare a memory stick even on an x86 computer however:
+In theory you can prepare a memory stick even on an x86 computer however:
 
 ```
 wget http://git.io/vnD1l -O splat.sh
