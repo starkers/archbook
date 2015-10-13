@@ -35,6 +35,7 @@ I don't know why yet but most of my memory sticks don't "work"..
 ## working USB sticks
 The following sticks are known to work: (Please report success)
 - DataTraveler "G4" - http://www.kingston.com/datasheets/DTIG4_en.pdf
+- SanDisk Ultra Fit™ CZ43 32GB USB 3.0 Low-Profile Flash Drive - SDCZ43-032G-G46 - https://www.sandisk.com/home/usb-flash/ultra-fit-usb
 
 ## non-working memory sticks
 - SanDisk 64GB Cruzer Extreme
@@ -63,4 +64,13 @@ where ```$DEVICE``` is normally one of these:
 - wicd is wicd
 
 # erata
-This script is currently only supported on the chromebook itself, it should work on an x86 computer but ensure you have the usual criminals installed (```cgpt```, ```parted``` ```mkfs.ext4```, ```tar```, ```wget``` ...coffee ...beer)
+This script is currently only supported on the armv7l chromebook itself, it should work on an x86 computer but ensure you have the usual criminals installed (```cgpt```, ```parted``` ```mkfs.ext4```, ```tar```, ```wget``` ...coffee ...beer)
+
+# Changes in shdriesner fork (https://github.com/shdriesner/archbook/tree/revise_parted_handling)
+- Changed root to /tmp/root (for mounting the root partition)
+- Removed parted and its libraries from the repo in favor of performing dev_install+emerge to install parted when in ChromeOS, and using pacman to install parted when in Arch.  This also reduced the amount of cleanup needed at the end of the script.
+- Revised lots of variable usage and naming to be a bit more explicit and clear.
+- Revised cgpt handling such that PATH contains /usr/local/bin, and existing cgpt in the active install is now copied to the new install's root partition in path /usr/local/bin to make downloading cgpt from the repo during the install (and the need to check for MACHINE type) unnecessary.  The intention is to make this script more compatible with non-ARM7 chromebooks.
+- Changed exit due to failed MD5 from 'exit' to 'exit 0' to prevent exiting the shell entirely.
+- Added a bit more verbage to the exit text so the user know what to do when the script completes.
+- For USB install, the AchLinux ARM tarball, its MD5, and the currently executing script are now copied to the new install's root partition at /root (i.e. root's home directory) so that these are already available to the user for installation to eMMC once the user reboots to the new USB install and logs in as root.

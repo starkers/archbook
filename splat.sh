@@ -19,16 +19,73 @@ yell() { echo "$0: $*" >&2; }
 die() { yell "$*"; exit 111; }
 try() { echo "$@" ; "$@" 1>/dev/null 2>/dev/null || die "cannot $*"; }
 
+# global config variables
+
+# SPLAT is the name of this script
+SPLAT=$0
+
+# This is the tarball specifically for the Exynos processor on the Samsung and HP Chromebook 11.
+# See http://archlinuxarm.org to determine the appropriate tarball for your ARM based
+# chromebook.
+TARBALL=ArchLinuxARM-peach-latest.tar.gz
+# This is the download URL for the above tarball and its md5 file
+ARCH_URL=http://os.archlinuxarm.org/os
+
+# This is the mount point for the root FS to which the tarball will be extracted
+ROOTFS=/tmp/root
+
+# Binaries must be under /usr/local/bin due to cgroups or something I assume.
+# Locally update PATH so that 'cgpt' can be invoked without specifying full path.
+PATH="${PATH}:/usr/local/bin"
+
+###
+# This function handles installing whatever packages
+# are passed to it, determining dynamically whether
+# to install using pacman (Arch way) or using emerge
+# (ChromeOS/Gentoo way).
+###
+get_pkg() {
+  # do nothing if no arguments given
+  for pkg in $*; do
+    if [ X`which ${pkg} 2>/dev/null` == X ]; then
+      # we need to install ${pkg}
+      if [ X`which pacman 2>/dev/null` != X ]; then
+        # install the Arch way
+        echo "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%"
+        echo "% ${pkg} is needed, which requires 'pacman -S'.         %"
+        echo "% When prompted, just hit ENTER to accept the defaults. %"
+        echo "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%"
+        echo
+        pacman -S "${pkg}"
+      else
+        # install the gentoo/chromeos way
+        echo "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%"
+        echo "% ${pkg} is needed, which possibly requires executing   %"
+        echo "% 'dev_install' to install emerge, and then 'emerge'.   %"
+        echo "% When prompted, just hit ENTER to accept the defaults. %"
+        echo "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%"
+        echo
+        if [ X`which emerge 2>/dev/null` == X ]; then
+          dev_install --reinstall
+        fi
+        emerge "${pkg}"
+      fi
+    fi
+  done
+}
+
+# This is where we check for the user supplied disk path
 if [ X$1 == X ]; then
   DISK=/dev/sda
 else
   DISK=$1
 fi
 
+# This is where we detect what type of install we are attempting
 if grep -q /dev/sd <<<"${DISK}" ; then
-  TYPE=usb
+  TYPE="usb"
 elif grep -q /dev/mmcblk <<<"${DISK}" ; then
-  TYPE=mmc
+  TYPE="mmc"
 else
   die "I'm sorry but I don't recognise the device: ${DISK}"
 fi
@@ -43,92 +100,51 @@ sleep 5
 for a in ${DISK}* ; do umount $a; done
 set -e
 
-ROOTFS=/tmp/root
-TARBALL=ArchLinuxARM-peach-latest.tar.gz
-ARCH_URL=http://os.archlinuxarm.org/os
-REPO_URL=https://raw.githubusercontent.com/starkers/archbook/master
+###
+# make sure the needed tools are present
+###
+get_pkg wget parted
 
-check_md5(){
-  MD5_CURRENT="$(curl -s ${ARCH_URL}/${TARBALL}.md5 | cut -c 1-32 )"
-  MD5_LOCAL="$(md5sum < "${TARBALL}" | cut -c 1-32)"
-  if [ "X${MD5_LOCAL}" == "X${MD5_CURRENT}" ]; then
-    yell "Local copy of Arch tarball has the correct MD5 -yay"
-  else
-    yell "Local copy of Arch has wrong md5.. removing file.. run this script again"
-    try rm "${TARBALL}"
-    exit
+# download the ArchLinuxARM tarball and MD5 files
+for f in "${TARBALL}" "${TARBALL}.md5"; do
+  if [ ! -f "${f}" ]; then
+    yell "Downloading ${ARCH_URL}/${f} to ${f}"
+    wget "${ARCH_URL}/${f}" -O "${f}"
   fi
-}
+done
 
-if [ ! -f "${TARBALL}" ]; then
-  yell "Downloading ArchLinuxARM tarball.. so wow"
-  curl "${ARCH_URL}/${TARBALL}" -o "${TARBALL}"
-fi
-check_md5
-
-### Pre-Checks for binaries etc...
-# what platform is this?
-MACHINE="$(uname -m)"
-
-###
-# Check status of cgpt binary
-# The cgpt binary should be native in the chromeos install,
-# but it may need to be installed from this repo when this
-# script is running in the Arch install from USB,
-# and we will keep our fingers crossed that its dependencies
-# are satisfied in the current running OS.
-###
-if [ X`which cgpt 2>/dev/null` == X ]; then
-  # Binaries must be under /usr/local/bin due to cgroups or something I assume.
-  # Locally update PATH so that 'cgpt' can be invoked without specifying full path.
-  PATH="$PATH:/usr/local/bin"
-  # create its target directory location
-  mkdir -p /usr/local/bin
-  # force the install in case the version in the repo is newer
-  try wget ${REPO_URL}/bin/${MACHINE}/cgpt -O /usr/local/bin/cgpt
-  # make sure its executable
-  try chmod +x /usr/local/bin/cgpt
+# verify tarball's integrity
+if [ X`md5sum -c ${TARBALL}.md5 2>/dev/null | awk '{print $NF}'` == X"OK" ]; then
+  yell "Local copy of ${TARBALL} is OK"
+else
+  yell "Local copy of Arch has wrong md5 ... removing file(s) ... run this script again"
+  try rm "${TARBALL}" "${TARBALL}.md5"
+  exit 0
 fi
 
-###
-# Check if parted is installed, and if not, install
-# parted using the distro appropriate method.
-# This is a more future proof way to do it than
-# installing parted and its libraries from this
-# repo, because otherwise we are chasing parted's
-# dependencies as Arch gets updated over time.
-###
-if [ X`which parted 2>/dev/null` == X ]; then
-  # we need to install parted
-  if [ X`which emerge 2>/dev/null` != X ]; then
-    # install parted the gentoo/chromeos way
-    try emerge parted
-  else if [ X`which pacman 2>/dev/null` != X ]; then
-    # install parted the Arch way
-    try pacman -S parted
-  fi
-fi
-
+# this is where we create a new GPT table and configure partitions
 try mkdir -p "${ROOTFS}"
 try dd if=/dev/zero of="${DISK}" bs=1M count=30
 try parted "${DISK}" mklabel gpt
 try cgpt create "${DISK}"
+# configure the Kernel partition
 try cgpt add -i 1 -t kernel -b 8192 -s 32768 -l Kernel -S 1 -T 5 -P 10 "${DISK}"
 
 #this is used to determine last sector
 SECTOR="$(cgpt show ${DISK} | grep "Sec GPT table" | awk '{print $1}')"
 
-let "LIMIT = $SECTOR - 40960"
+let "LIMIT = ${SECTOR} - 40960"
+# configure the Root partition
 try cgpt add -i 2 -t data -b 40960 -s "${LIMIT}" -l Root "${DISK}"
 
 yell "Signal re-read of device"
 try sync
 sleep 1
-if [ "${TYPE}" == usb ]; then
+if [ "usb" == "${TYPE}" ]; then
   yell "I assume this is the USB stick and I'm inside chromeos"
   try sfdisk -R "${DISK}"
 else
-  yell "I assume this is now the inbuilt MMC and I'm inside arch"
+  yell "I assume this is now the inbuilt eMMC and I'm inside arch"
   try partprobe
 fi
 
@@ -136,8 +152,8 @@ sleep 1
 
 # set name of disk partition
 DISKP="${DISK}"
-# for MMC, append 'p' to DISK
-if [ "${TYPE}" == mmc ]; then DISKP="${DISKP}p"; fi
+# for eMMC, append 'p' to DISKP
+if [ "mmc" == "${TYPE}" ]; then DISKP="${DISKP}p"; fi
 
 # format and mount root partition
 try mkfs.ext4 -L root -m 0 "${DISKP}2"
@@ -147,9 +163,46 @@ try tar -xf "${TARBALL}" -C ${ROOTFS}
 # write kernel directly to kernel partition
 try dd if="${ROOTFS}/boot/vmlinux.kpart" of="${DISKP}1"
 
+# if there is a working copy of cgpt, we are going to transfer
+# it to the new install.
+for exe in cgpt; do
+  fp=`which ${exe} 2>/dev/null`
+  if [ X"${fp}" != X ]; then
+    # we don't care if this fails
+    mkdir -p "${ROOTFS}/usr/local/bin"
+    # copy the binary
+    try cp -f "${fp}" "${ROOTFS}/usr/local/bin/."
+    # make sure it's executable
+    try chmod +x "${ROOTFS}/usr/local/bin/${exe}"
+  fi
+done
+
+# if this is a USB install, we will go ahead and add the TARBALL, its MD5,
+# and this script to the ${ROOTFS}/root directory to save download time.
+if [ "usb" == "${TYPE}" ]; then
+  for f in "${SPLAT}" "${TARBALL}" "${TARBALL}.md5"; do
+    try cp -vf "${f}" "${ROOTFS}/root/."
+  done
+fi
+
 # perform sync, and unmount root partition, and remove ROOTFS if empty
 try sync
 try umount ${ROOTFS}
 try rmdir ${ROOTFS}
 
-yell "beroot!"
+if [ "usb" == "${TYPE}" ]; then
+  cat <<EOF
+Install to ${DRIVE} finished."
+Reboot and hit Ctrl-U to select boot from ${DRIVE} at the splash screen.
+You can simply enjoy running Arch Linux from USB, or to install natively to eMMC,
+upon boot to ${DRIVE}, login as root, enable wifi, and execute the following from /root:
+
+  % bash ${SPLAT} /dev/mmcblk0
+
+EOF
+else
+  cat <<EOF
+Install to ${DRIVE} finished.  You now have Arch Linux installed natively to eMMC."
+Reboot, hit Ctrl-D to select boot from ${DRIVE} at the splash screen, and enjoy.
+EOF
+fi
