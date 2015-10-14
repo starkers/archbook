@@ -51,23 +51,42 @@ get_pkg() {
       # we need to install ${pkg}
       if [ X`which pacman 2>/dev/null` != X ]; then
         # install the Arch way
-        echo "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%"
-        echo "% ${pkg} is needed, which requires 'pacman -S'.         %"
-        echo "% When prompted, just hit ENTER to accept the defaults. %"
-        echo "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%"
-        echo
+        cat <<EOF
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+We need to install ${pkg} now using 'pacman -S'
+When prompted, just hit [ENTER] or type 'Y' and hit
+[ENTER] to proceed with the installation of ${pkg}.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+EOF
+        # perform the install
         pacman -S "${pkg}"
       else
         # install the gentoo/chromeos way
-        echo "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%"
-        echo "% ${pkg} is needed, which possibly requires executing   %"
-        echo "% 'dev_install' to install emerge, and then 'emerge'.   %"
-        echo "% When prompted, just hit ENTER to accept the defaults. %"
-        echo "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%"
-        echo
         if [ X`which emerge 2>/dev/null` == X ]; then
-          dev_install --reinstall
+          cat <<EOF
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+The tool 'emerge' is missing, so we need to install it
+via the 'dev_install' command.  When prompted, just hit
+[ENTER] to accept the defaults, or customize as desired.
+You may see many errors during 'dev_install' execution.
+As long as the result is a working version of 'emerge'
+we should be good to go, but YMMV.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+EOF
+          # wait for user to say go
+          echo -n "Hit [ENTER] to proceed with running dev_install or Ctrl-C to quit: " && read ans
+          # execute dev_install
+          dev_install
         fi
+        cat <<EOF
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+We can emerge ${pkg} now, so here goes ...
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+EOF
+        # perform the install
         emerge "${pkg}"
       fi
     fi
@@ -82,12 +101,30 @@ else
 fi
 
 # This is where we detect what type of install we are attempting
-if grep -q /dev/sd <<<"${DISK}" ; then
+#
+if grep -q /dev/sd[a-z]$ <<<"${DISK}" ; then
   TYPE="usb"
-elif grep -q /dev/mmcblk <<<"${DISK}" ; then
+elif grep -q /dev/mmcblk[0-9]$ <<<"${DISK}" ; then
   TYPE="mmc"
 else
-  die "I'm sorry but I don't recognise the device: ${DISK}"
+  cat <<EOF
+I'm sorry, but the disk path ${DISK} is invalid.
+
+For USB install, please specify a /dev/sd<x> path
+(where <x> is a lower case letter in the range a-z
+corresponding to the intended block device target),
+
+For an eMMC or SD card install, please specify a
+/dev/mmcblk<N> path (where <N> is a number in the range
+0-9 corresponding to the intended block device target).
+
+Be sure to specify a block device path and *not* merely
+a single partition's path, because this tool is designed
+to apply a complete partition scheme to the entire target
+disk.
+
+EOF
+  die "exiting ..."
 fi
 
 # if [ ! -b "${DISK}" ]; then
@@ -192,17 +229,17 @@ try rmdir ${ROOTFS}
 
 if [ "usb" == "${TYPE}" ]; then
   cat <<EOF
-Install to ${DRIVE} finished."
-Reboot and hit Ctrl-U to select boot from ${DRIVE} at the splash screen.
+Install to ${DISK} finished."
+Reboot and hit Ctrl-U to select boot from ${DISK} at the splash screen.
 You can simply enjoy running Arch Linux from USB, or to install natively to eMMC,
-upon boot to ${DRIVE}, login as root, enable wifi, and execute the following from /root:
+upon boot to ${DISK}, login as root, enable wifi, and execute the following from /root:
 
   % bash ${SPLAT} /dev/mmcblk0
 
 EOF
 else
   cat <<EOF
-Install to ${DRIVE} finished.  You now have Arch Linux installed natively to eMMC."
-Reboot, hit Ctrl-D to select boot from ${DRIVE} at the splash screen, and enjoy.
+Install to ${DISK} finished.  You now have Arch Linux installed natively to eMMC."
+Reboot, hit Ctrl-D to select boot from ${DISK} at the splash screen, and enjoy.
 EOF
 fi
