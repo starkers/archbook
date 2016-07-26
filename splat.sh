@@ -179,7 +179,7 @@ try sync
 sleep 1
 if [ "usb" == "${TYPE}" ]; then
   yell "I assume this is the USB stick and I'm inside chromeos"
-  try sfdisk -R "${DISK}"
+  try hdparm -z "${DISK}"
 else
   yell "I assume this is now the inbuilt eMMC and I'm inside arch"
   try partprobe
