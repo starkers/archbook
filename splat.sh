@@ -47,7 +47,7 @@ PATH="${PATH}:/usr/local/bin"
 get_pkg() {
   # do nothing if no arguments given
   for pkg in $*; do
-    if [ X`which ${pkg} 2>/dev/null` == X ]; then
+    if [ X`which $(basename ${pkg}) 2>/dev/null` == X ]; then
       # we need to install ${pkg}
       if [ X`which pacman 2>/dev/null` != X ]; then
         # install the Arch way
@@ -60,7 +60,7 @@ When prompted, just hit [ENTER] or type 'Y' and hit
 
 EOF
         # perform the install
-        pacman -S "${pkg}"
+        pacman -S "$(basename ${pkg})"
       else
         # install the gentoo/chromeos way
         if [ X`which emerge 2>/dev/null` == X ]; then
@@ -140,7 +140,7 @@ set -e
 ###
 # make sure the needed tools are present
 ###
-get_pkg wget parted
+get_pkg wget sys-block/parted
 
 # download the ArchLinuxARM tarball and MD5 files
 for f in "${TARBALL}" "${TARBALL}.md5"; do
