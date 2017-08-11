@@ -140,7 +140,12 @@ set -e
 ###
 # make sure the needed tools are present
 ###
-get_pkg wget sys-block/parted
+if [ X`which pacman 2>/dev/null` == X ]
+then
+  get_pkg net-misc/wget sys-block/parted
+else
+  get_pkg wget parted
+fi
 
 # download the ArchLinuxARM tarball and MD5 files
 for f in "${TARBALL}" "${TARBALL}.md5"; do
